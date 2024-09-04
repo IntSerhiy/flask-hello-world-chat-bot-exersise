@@ -6,7 +6,7 @@ import requests
 from openai import OpenAI
 from pinecone import Pinecone
 
-from intents.functions_intents import add_intent_to_databases, delete_vector, search
+from intents.functions_intents import add_intent_to_databases, delete_vector, search, call_gpt, generetive_prompt
 
 CLIENT = OpenAI(api_key="sk-proj-mmRKHjeDcfL9vQxDezi4T3BlbkFJKXL7oAEiuxFsU8ZC9xVs")
 pc = Pinecone(api_key="30f3efb4-4c57-40c4-bdfc-c2b6a4f52635")
@@ -51,3 +51,11 @@ def delete_intent():
 def get_prompt():
     data = request.get_json()
     return prompt(data)
+
+
+@app.route('/intent/recognize', methods=['POST'])
+def intent_recognize():
+    data = request.get_json()
+    phrase = data.get('phrase')
+    result = generetive_prompt(phrase)
+    return result

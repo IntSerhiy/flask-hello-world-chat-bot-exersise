@@ -98,10 +98,7 @@ def search(query: str, top_k):
     )
     return list(map(lambda x: {"intent_name":x.metadata['intent_name'], "phrase": x.metadata['phrase']}, result.matches))
 
-def promt(data):
-    data = data
-    query = data['query']
-
+def promt(query):
     intents = search(query, 10)
 
     if not intents:
@@ -110,22 +107,41 @@ def promt(data):
     examples = []
     for i, intent in enumerate(intents, 1):
         example = f"""
-            {i}. **Назва інтенту: {intent['intent_name']}**
-               - Приклад інтенту: "{intent['phrase']}"
+            {i}.  - Фраза: "{intent['phrase']}"
+            Назва інтенту: {intent['intent_name']}
+              
             """
         examples.append(example.strip())
 
     prompt = f"""
-        Ви є AI-асистентом, призначеним для відповідей на запити користувачів на основі розпізнаних намірів. Нижче наведені деякі приклади намірів і фраз, пов'язаних з ними. Використовуйте ці приклади, щоб генерувати відповідні відповіді для кожного розпізнаного наміру.
+       Ви є асистентом, який обирає найбільш підходящий інтент і фрази, обери фразу яку ти повернеш.
 
-    Приклади:
+    Фрази:
     {'\n'.join(examples)}
 
-    Тепер, на основі наступного запиту, згенеруйте відповідь у подібний спосіб:
-
-    Користувач сказав: "{query}"
-    Відповідайте відповідно:
+    - Фраза: "{query}"
+    Назва інтенту:  
         """
+
 
     return prompt
 
+
+def call_gpt(prompt, model="gpt-3.5-turbo"):
+    try:
+        response = CLIENT.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": prompt},
+            ],
+        )
+        message = response.choices[0].message.content
+        return message.strip()
+    except Exception as e:
+        return str(e)
+
+
+def generetive_prompt(phrase):
+    prompt = promt(phrase)
+    intent = call_gpt(prompt)
+    return intent
